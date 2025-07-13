@@ -2,13 +2,13 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require('openai');
 require('dotenv').config();
 
 const TEST_MODE = true; // Toggle to false for live replies
-const openai = new OpenAIApi(new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-}));
+});
 const REPLIED_POSTS_FILE = 'replied_posts.json';
 const OUTPUT_FILE = 'output.json';
 const KEYWORDS = ['kitchen', 'contractor', 'renovation', 'basement']; 
@@ -44,18 +44,18 @@ function isRecentPost(timestamp) {
 
 async function generateReply(postText) {
   const prompt = `
-You are a friendly neighbor responding on Nextdoor in the ${NEIGHBORHOOD_NAME} community. Craft a unique, helpful reply (max 2 sentences) that references the post’s specific request for home renovation or contractor services and avoids generic phrases. Only reply if the post explicitly asks for recommendations or help with home renovation or contractor services (e.g., kitchen or basement projects) and is not promotional or unrelated.
+You are a friendly neighbor responding on Nextdoor in the ${NEIGHBORHOOD_NAME} community. Craft a unique, helpful reply (max 2 sentences) that references the post's specific request for home renovation or contractor services and avoids generic phrases. Only reply if the post explicitly asks for recommendations or help with home renovation or contractor services (e.g., kitchen or basement projects) and is not promotional or unrelated.
 Post: "${postText}"
 Return: { "replyWarranted": Boolean, "reply": String }
   `;
   try {
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 100,
       temperature: 0.7,
     });
-    return JSON.parse(response.data.choices[0].message.content.trim());
+    return JSON.parse(response.choices[0].message.content.trim());
   } catch (error) {
     console.error("Error parsing GPT response:", error);
     return { replyWarranted: false, reply: "" };
